@@ -27,6 +27,18 @@ fn build_scores_table(results: &str) -> HashMap<&str, TeamScores> {
         let team_1_score: u8 = split_iterator.next().unwrap().parse().unwrap();
         let team_2_score: u8 = split_iterator.next().unwrap().parse().unwrap();
 
+        {
+            let team_1 = scores.entry(team_1_name).or_default();
+            team_1.goals_scored = team_1.goals_scored.saturating_add(team_1_score);
+            team_1.goals_conceded = team_1.goals_conceded.saturating_add(team_2_score);
+        }
+
+        {
+            let team_2 = scores.entry(team_2_name).or_default();
+            team_2.goals_scored = team_2.goals_scored.saturating_add(team_2_score);
+            team_2.goals_conceded = team_2.goals_conceded.saturating_add(team_1_score);
+        }
+
         // TODO: Populate the scores table with the extracted details.
         // Keep in mind that goals scored by team 1 will be the number of goals
         // conceded by team 2. Similarly, goals scored by team 2 will be the
@@ -44,7 +56,8 @@ fn main() {
 mod tests {
     use super::*;
 
-    const RESULTS: &str = "England,France,4,2
+    const RESULTS: &str =
+        "England,France,4,2
 France,Italy,3,1
 Poland,Spain,2,0
 Germany,England,2,1
@@ -54,9 +67,11 @@ England,Spain,1,0";
     fn build_scores() {
         let scores = build_scores_table(RESULTS);
 
-        assert!(["England", "France", "Germany", "Italy", "Poland", "Spain"]
-            .into_iter()
-            .all(|team_name| scores.contains_key(team_name)));
+        assert!(
+            ["England", "France", "Germany", "Italy", "Poland", "Spain"]
+                .into_iter()
+                .all(|team_name| scores.contains_key(team_name))
+        );
     }
 
     #[test]
